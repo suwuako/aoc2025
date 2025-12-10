@@ -20,39 +20,61 @@ impl Rot {
         }
     }
 
-    pub fn apply_rot(&self, i: &mut i32, zeros: &mut i32) -> () {
-        let mut s: i32 = self.size % 100;
+    pub fn apply_rot(&self, i: &mut i32, zeros: &mut i32, state: &mut bool) -> () {
         let prev = i.clone();
+        let mut s: i32 = self.size;
+        if self.dir == String::from("L") { s *= -1; }
+        *i += s;
 
-        if self.dir == String::from("L") {
-            s *= -1;
+        // *i is beyond the current range
+        // to check if passthrough has occured, there are a few cases:
+        // 0: rotation PAST 0 (i.e. from 80 R40 to 20, from 20 L40 to 80)
+        // 1: rotation HITS 0 (i.e. from 40 L40 to 0; next rotation shouldn't count)
+        //      a: that means that we check if flag set for next rot is true
+        while *i > 99 || *i < 0 {
+            if *i > 99 {
+                *i -= 100;
+                *zeros += 1;
+                *state = true;
+            }
+            if *i < 0 {
+                *i += 100;
+                if !*state {
+                    *zeros += 1;
+                } else {
+                    *state = false;
+                }
+            }
+
         }
 
-        // lookahead
-        let lookahead = *i + s;
-        if lookahead < 0 {
-            // underflow
-            *i = 100 + lookahead;
-        } else if lookahead > 99 {
-            *i = lookahead - 100;
+        if *i == 0 {
+            if !*state {
+                *zeros += 1;
+            }
+
+            *state = true;
         } else {
-            *i += s;
+            *state = false;
         }
-
-        if *i == 0 { *zeros += 1; }
-        println!("{}{}: from {} to {}", self.dir, self.size, prev, i);
+        println!("{}{}: from {} to {}", self.dir, self.size, prev, *i);
     }
+
 }
 
 fn main() {
     let mut start: i32 = 50;
     let mut zeros: i32 = 0;
+    let mut state: bool = false;
 
     loop {
         let input: String = read();
+        if input == "" {
+            return;
+        }
         let r: Rot = Rot::new(input);
 
-        r.apply_rot(&mut start, &mut zeros);
+        r.apply_rot(&mut start, &mut zeros, &mut state);
         println!("zeros: {zeros}");
     }
 }
