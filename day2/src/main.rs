@@ -23,8 +23,9 @@ impl Iterator for ParseType {
 
     fn next(self: &mut Self) -> Option<u64> {
         if self.lbound <= self.ubound {
+            let res = Some(self.lbound);
             self.lbound += 1;
-            Some(self.lbound)
+            res
         } else {
             None
         }
@@ -75,23 +76,29 @@ fn rept_n(pt: &mut ParseType) -> u64 {
     let mut rept_sum = 0;
 
     'has_match: for i in pt {
-        let slices: Option<Vec<u64>> = i.index_slice(2);
-        let mut svec: Vec<u64> = match slices {
-            Some(n) => n,
-            None => continue,
-        };
+        let digits_range = if i.digits() + 1 >= 2 {i.digits() + 1} else {2};
 
-        let base = match svec.pop() {
-            Some(n) => n,
-            None => continue,
-        };
-        for item in svec {
-            if base != item {
-                continue 'has_match;
+        'not_found_yet: for j in 2..digits_range {
+            let slices: Option<Vec<u64>> = i.index_slice(j);
+            let mut svec: Vec<u64> = match slices {
+                Some(n) => n,
+                None => continue,
+            };
+
+            let base = match svec.pop() {
+                Some(n) => n,
+                None => continue,
+            };
+            for item in svec {
+                if base != item {
+                    continue 'not_found_yet;
+                }
             }
-        }
 
-        rept_sum += i;
+            // we lowk found it
+            rept_sum += i;
+            continue 'has_match;
+        }
     }
 
     rept_sum
