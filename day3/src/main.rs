@@ -38,6 +38,7 @@ fn one_solve() -> u128 {
     for i in 0..10 {
         let ichar = (('0' as u8) + i) as char;
         if mem.len() < 2 { break; }
+        if 
     }
 
     42
